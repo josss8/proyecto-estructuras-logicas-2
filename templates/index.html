@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Conversor</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <!-- Toggle tema -->
+  <button id="theme-toggle" class="theme-toggle" title="Cambiar tema"></button>
+
+  <div class="container">
+    <h1 class="title">⏱️</h1>
+    <div id="clock" class="live-clock">--:--:--</div>
+
+    <!-- Espacios para mostrar hora convertida -->
+    <div class="conversion">
+      <div class="conversion-item">
+        <label>Binario</label>
+        <div id="binario" class="conversion-box">---</div>
+      </div>
+      <div class="conversion-item">
+        <label>Octal</label>
+        <div id="octal" class="conversion-box">---</div>
+      </div>
+      <div class="conversion-item">
+        <label>Hexadecimal</label>
+        <div id="hexadecimal" class="conversion-box">---</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function actualizarReloj() {
+      const now = new Date();
+      const horas = String(now.getHours()).padStart(2, '0');
+      const minutos = String(now.getMinutes()).padStart(2, '0');
+      const segundos = String(now.getSeconds()).padStart(2, '0');
+      const horaStr = `${horas}:${minutos}:${segundos}`;
+
+      document.getElementById("clock").textContent = horaStr;
+
+      // Enviar hora al backend
+      fetch("/convertir", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hora: horaStr })
+      })
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("binario").textContent = data.binario ?? "---";
+        document.getElementById("octal").textContent = data.octal ?? "---";
+        document.getElementById("hexadecimal").textContent = data.hexadecimal ?? "---";
+      });
+    }
+
+    setInterval(actualizarReloj, 1000);
+    actualizarReloj();
+
+    // Toggle tema
+    const toggle = document.getElementById("theme-toggle");
+    const htmlTag = document.documentElement;
+
+    toggle.addEventListener("click", () => {
+      const currentTheme = htmlTag.getAttribute("data-theme");
+      const newTheme = currentTheme === "dark" ? "light" : "dark";
+      htmlTag.setAttribute("data-theme", newTheme);
+      toggle.classList.toggle("on");
+    });
+  </script>
+</body>
+</html>
