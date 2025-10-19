@@ -3,35 +3,73 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Conversor</title>
+  <title>Reloj</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+  <div class="particles" id="particles"></div>
+  
   <!-- Toggle tema -->
   <button id="theme-toggle" class="theme-toggle" title="Cambiar tema"></button>
 
   <div class="container">
     <h1 class="title">⏱️</h1>
     <div id="clock" class="live-clock">--:--:--</div>
+    
+    <div class="separator"></div>
 
     <!-- Espacios para mostrar hora convertida -->
     <div class="conversion">
       <div class="conversion-item">
-        <label>Binario</label>
+        <label>BINARIO</label>
         <div id="binario" class="conversion-box">---</div>
       </div>
       <div class="conversion-item">
-        <label>Octal</label>
+        <label>OCTAL</label>
         <div id="octal" class="conversion-box">---</div>
       </div>
       <div class="conversion-item">
-        <label>Hexadecimal</label>
+        <label>HEXADECIMAL</label>
         <div id="hexadecimal" class="conversion-box">---</div>
       </div>
     </div>
   </div>
 
   <script>
+    // Sistema de partículas 
+    function createParticles() {
+      const container = document.getElementById('particles');
+      const particleCount = 30;
+      
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.style.position = 'absolute';
+        particle.style.width = Math.random() * 6 + 2 + 'px';
+        particle.style.height = particle.style.width;
+        particle.style.background = 'var(--accent)';
+        particle.style.borderRadius = '50%';
+        particle.style.opacity = Math.random() * 0.5 + 0.1;
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.top = Math.random() * 100 + '%';
+        particle.style.animation = `float ${Math.random() * 10 + 10}s linear infinite`;
+        
+        // Añadir animación flotante
+        const style = document.createElement('style');
+        style.textContent = `
+          @keyframes float {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px) rotate(90deg); }
+            50% { transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px) rotate(180deg); }
+            75% { transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px) rotate(270deg); }
+            100% { transform: translate(0, 0) rotate(360deg); }
+          }
+        `;
+        document.head.appendChild(style);
+        
+        container.appendChild(particle);
+      }
+    }
+
     function actualizarReloj() {
       const now = new Date();
       const horas = String(now.getHours()).padStart(2, '0');
@@ -39,7 +77,10 @@
       const segundos = String(now.getSeconds()).padStart(2, '0');
       const horaStr = `${horas}:${minutos}:${segundos}`;
 
-      document.getElementById("clock").textContent = horaStr;
+      const clockElement = document.getElementById("clock");
+      clockElement.textContent = horaStr;
+      clockElement.classList.add('updating');
+      setTimeout(() => clockElement.classList.remove('updating'), 500);
 
       // Enviar hora al backend
       fetch("/convertir", {
@@ -49,14 +90,36 @@
       })
       .then(res => res.json())
       .then(data => {
-        document.getElementById("binario").textContent = data.binario ?? "---";
-        document.getElementById("octal").textContent = data.octal ?? "---";
-        document.getElementById("hexadecimal").textContent = data.hexadecimal ?? "---";
+        const binarioElement = document.getElementById("binario");
+        const octalElement = document.getElementById("octal");
+        const hexadecimalElement = document.getElementById("hexadecimal");
+        
+        if (data.binario) {
+          binarioElement.textContent = data.binario;
+          binarioElement.classList.add('updating');
+          setTimeout(() => binarioElement.classList.remove('updating'), 500);
+        }
+        
+        if (data.octal) {
+          octalElement.textContent = data.octal;
+          octalElement.classList.add('updating');
+          setTimeout(() => octalElement.classList.remove('updating'), 500);
+        }
+        
+        if (data.hexadecimal) {
+          hexadecimalElement.textContent = data.hexadecimal;
+          hexadecimalElement.classList.add('updating');
+          setTimeout(() => hexadecimalElement.classList.remove('updating'), 500);
+        }
       });
     }
 
-    setInterval(actualizarReloj, 1000);
-    actualizarReloj();
+    // Inicialización
+    document.addEventListener('DOMContentLoaded', () => {
+      createParticles();
+      setInterval(actualizarReloj, 1000);
+      actualizarReloj();
+    });
 
     // Toggle tema
     const toggle = document.getElementById("theme-toggle");
