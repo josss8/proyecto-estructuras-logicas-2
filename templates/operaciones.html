@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Operaciones{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="title">Operaciones ⏱️</h1>
+    
+    <form id="op-form" class="op-form">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="horas_op">Horas</label>
+                <input type="number" id="horas_op" name="horas_op" placeholder="0" value="0">
+            </div>
+            <div class="form-group">
+                <label for="minutos_op">Minutos</label>
+                <input type="number" id="minutos_op" name="minutos_op" placeholder="0" value="0">
+            </div>
+            <div class="form-group">
+                <label for="operacion">Operación</label>
+                <select id="operacion" name="operacion">
+                    <option value="sumar">Sumar</option>
+                    <option value="restar">Restar (C a 2)</option>
+                </select>
+            </div>
+        </div>
+        
+        <input type="hidden" id="hora_actual" name="hora_actual">
+        
+        <button type="submit" class="op-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2zM2 0h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2z"/>
+                <path d="M6.146 11.854a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708zm.708-10-3 3a.5.5 0 0 1-.708-.708l3-3a.5.5 0 1 1 .708.708zM11.854 6.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708l3-3a.5.5 0 0 1 .708 0z"/>
+            </svg>
+            Calcular Nueva Hora
+        </button>
+    </form>
+
+    <div class="separator"></div>
+
+    <div id="resultado-container" class="resultado-container" style="display: none;">
+        
+        <div class="resultado-header">
+            <p style="font-size: 1rem; color: var(--muted); margin: 0;">
+                Hora Original: <span id="res-original">--:--:--</span>
+            </p>
+            
+            <h2 id="res-calculada" class="live-clock" style="font-size: 2.8rem; margin-top: 0.5rem; margin-bottom: 0;">--:--:--</h2>
+        </div>
+        
+        <div class="conversion">
+            <div class="conversion-item">
+                <label>BINARIO</label>
+                <div id="res-binario" class="conversion-box">---</div>
+            </div>
+            <div class="conversion-item">
+                <label>OCTAL</label>
+                <div id="res-octal" class="conversion-box">---</div>
+            </div>
+            <div class="conversion-item">
+                <label>HEXADECIMAL</label>
+                <div id="res-hexadecimal" class="conversion-box">---</div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="error-container" class="error-box" style="display: none;"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('op-form');
+    const resultadoContainer = document.getElementById('resultado-container');
+    const errorContainer = document.getElementById('error-container');
+    
+    // Spans/Divs de resultado (Simplificado)
+    const resOriginal = document.getElementById('res-original');
+    const resCalculada = document.getElementById('res-calculada'); // Solo uno
+    const resBinario = document.getElementById('res-binario');
+    const resOctal = document.getElementById('res-octal');
+    const resHexadecimal = document.getElementById('res-hexadecimal');
+    const hiddenHoraActual = document.getElementById('hora_actual');
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault(); 
+        
+        const now = new Date();
+        const horas = String(now.getHours()).padStart(2, '0');
+        const minutos = String(now.getMinutes()).padStart(2, '0');
+        const segundos = String(now.getSeconds()).padStart(2, '0');
+        const horaActualStr = `${horas}:${minutos}:${segundos}`;
+        hiddenHoraActual.value = horaActualStr;
+
+        const formData = new FormData(form);
+
+        resultadoContainer.style.display = 'none';
+        errorContainer.style.display = 'none';
+        resCalculada.classList.remove('updating'); 
+
+        fetch("{{ url_for('calcular') }}", {
+            method: "POST",
+            body: formData
+        })
+        .then(res => {
+            if (!res.ok) {
+                return res.json().then(errData => {
+                    throw new Error(errData.error || 'Error desconocido');
+                });
+            }
+            return res.json();
+        })
+        .then(data => {
+            if (data.error) {
+                 throw new Error(data.error);
+            }
+
+            // Mostrar resultados 
+            resOriginal.textContent = data.hora_original;
+            resCalculada.textContent = data.hora_calculada; // Solo este
+            resBinario.textContent = data.binario;
+            resOctal.textContent = data.octal;
+            resHexadecimal.textContent = data.hexadecimal;
+            
+            resultadoContainer.style.display = 'block';
+            
+            resCalculada.classList.add('updating');
+            setTimeout(() => resCalculada.classList.remove('updating'), 500);
+        })
+        .catch(error => {
+            console.error('Error en fetch:', error);
+            errorContainer.textContent = `Error: ${error.message}`;
+            errorContainer.style.display = 'block';
+        });
+    });
+});
+</script>
+{% endblock %}

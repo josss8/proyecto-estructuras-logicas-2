@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Reloj Conversor{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="title">⏱️</h1>
+    <div id="clock" class="live-clock">--:--:--</div>
+    
+    <div class="separator"></div>
+
+    <div class="conversion">
+        <div class="conversion-item">
+            <label>BINARIO</label>
+            <div id="binario" class="conversion-box">---</div>
+        </div>
+        <div class="conversion-item">
+            <label>OCTAL</label>
+            <div id="octal" class="conversion-box">---</div>
+        </div>
+        <div class="conversion-item">
+            <label>HEXADECIMAL</label>
+            <div id="hexadecimal" class="conversion-box">---</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function actualizarReloj() {
+        const now = new Date();
+        const horas = String(now.getHours()).padStart(2, '0');
+        const minutos = String(now.getMinutes()).padStart(2, '0');
+        const segundos = String(now.getSeconds()).padStart(2, '0');
+        const horaStr = `${horas}:${minutos}:${segundos}`;
+
+        // Actualiza el reloj principal
+        document.getElementById("clock").textContent = horaStr;
+        
+
+        // Enviar hora al backend
+        fetch("/convertir", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ hora: horaStr })
+        })
+        .then(res => res.json())
+        .then(data => {
+            // Actualiza los campos de conversión
+            if (data.binario) {
+                document.getElementById("binario").textContent = data.binario;
+            }
+            if (data.octal) {
+                document.getElementById("octal").textContent = data.octal;
+            }
+            if (data.hexadecimal) {
+                document.getElementById("hexadecimal").textContent = data.hexadecimal;
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        setInterval(actualizarReloj, 1000);
+        actualizarReloj();
+    });
+</script>
+{% endblock %}

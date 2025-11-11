@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Conversor{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    
+    <button id="theme-toggle" class="theme-toggle" title="Cambiar tema"></button>
+    
+    <nav class="main-nav">
+        <a href="{{ url_for('home') }}" class="{{ 'active' if request.path == url_for('home') else '' }}">Reloj</a>
+        <a href="{{ url_for('operaciones') }}" class="{{ 'active' if request.path == url_for('operaciones') else '' }}">Operaciones</a>
+    </nav>
+
+    {% block content %}{% endblock %}
+
+    <script>
+        /* --- Sistema de Partículas Mejorado --- */
+        function createParticles() {
+            const container = document.getElementById('particles');
+            if (!container) return; 
+            
+            const particleCount = 60;
+            const style = document.createElement('style');
+            document.head.appendChild(style);
+            
+            const keyframes = `
+                @keyframes drift {
+                    0% { transform: translate(0, 0); opacity: 0; }
+                    10% { opacity: 0.8; }
+                    90% { opacity: 0.8; }
+                    100% { transform: translate(var(--move-x), -120vh); opacity: 0; }
+                }
+            `;
+            style.sheet.insertRule(keyframes, 0);
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.style.position = 'absolute';
+                const size = Math.random() * 6 + 2; 
+                particle.style.width = `${size}px`; 
+                particle.style.height = particle.style.width;
+                particle.style.background = 'var(--accent)'; 
+                particle.style.borderRadius = '50%';
+                particle.style.opacity = 0;
+                particle.style.left = Math.random() * 100 + 'vw';
+                particle.style.top = Math.random() * 100 + 100 + 'vh'; 
+                const moveX = `${Math.random() * 40 - 20}vw`;
+                particle.style.setProperty('--move-x', moveX);
+                const duration = Math.random() * 20 + 20;
+                const delay = Math.random() * 10;
+                particle.style.animation = `drift ${duration}s linear ${delay}s infinite`;
+                container.appendChild(particle);
+            }
+        }
+
+        /* --- Toggle de Tema --- */
+        function setupThemeToggle() {
+            const toggle = document.getElementById("theme-toggle");
+            const htmlTag = document.documentElement;
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            htmlTag.setAttribute("data-theme", savedTheme);
+            if (savedTheme === 'light') toggle.classList.add("on");
+
+            toggle.addEventListener("click", () => {
+                const currentTheme = htmlTag.getAttribute("data-theme");
+                const newTheme = currentTheme === "dark" ? "light" : "dark";
+                htmlTag.setAttribute("data-theme", newTheme);
+                toggle.classList.toggle("on");
+                localStorage.setItem('theme', newTheme);
+            });
+        }
+
+        /* --- Inicialización --- */
+        document.addEventListener('DOMContentLoaded', () => {
+            createParticles();
+            setupThemeToggle();
+        });
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
